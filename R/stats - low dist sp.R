@@ -60,7 +60,7 @@ rich_full$Year <- as.factor(rich_full$Year)
   # Protocol and Year ran effs (for vars collected on both protocols)
   # unique ID not included b/c only 1 sample per site
   
-  # env vars, mostly
+  # top 5 - env vars, mostly #####
   {
     # 1. perform the LMERs, tidied summary stats, and anova model fits
     # # vars only meausred on terrestrial protocol sites PLUS culimp sp for non-SL wetlands
@@ -254,7 +254,7 @@ rich_full$Year <- as.factor(rich_full$Year)
   }
   
   
-  # plant biodiversity vars
+  # top 5 plant diversity vars ####
   {
     # 1. perform the LMERs, tidied summary stats, and anova model fits
     results_rich_top5 <- rich %>% 
@@ -322,7 +322,7 @@ rich_full$Year <- as.factor(rich_full$Year)
       arrange(response_var, WetlandType)
     
     aics <- bind_rows(rich_aic_top5, sl_rich_aic, sl_propexot_aic) # combine aic values and add to fits df
-    m_fits_top5 <- left_join(m_fits_top5, aics)
+    m_fits_top5_rich <- left_join(m_fits_top5_rich, aics, by=c("WetlandType", "response_var"))
     
     # 4. gather all the R2 values for terrestrial and wetland models; add sl culimp r2 vals
     rich_margr <- results_rich_top5 %>% 
@@ -356,14 +356,14 @@ rich_full$Year <- as.factor(rich_full$Year)
   
 }
 
-# Full IS list #### in progress fixing
+# Full IS list #### 
 {
   # regressions:
   # Num of LowDistSp as fixed eff
   # Protocol and Year ran effs (for vars collected on both protocols)
   # unique ID not included b/c only 1 sample per site
   
-  # env vars, mostly
+  # full is list - env vars ####
   {
     # 1. perform the LMERs, tidied summary stats, and anova model fits
     # # vars only meausred on terrestrial protocol sites PLUS culimp sp for non-SL wetlands
@@ -514,7 +514,7 @@ rich_full$Year <- as.factor(rich_full$Year)
       mutate(response_var=str_remove(response_var, "_anova")) %>% 
       arrange(response_var, WetlandType)
     aics <- bind_rows(ter_aic, wet_aic, sl_aic) # combine aic values and add to fits df
-    m_fits_full <- left_join(m_fits_full, aics)
+    m_fits_full <- left_join(m_fits_full, aics, by=c("WetlandType", "response_var"))
     
     # 4. gather all the R2 values for terrestrial and wetland models; add sl culimp r2 vals
     ter_margr <- results_chars_fullter %>% 
@@ -557,7 +557,7 @@ rich_full$Year <- as.factor(rich_full$Year)
   }
   
   
-  # plant biodiversity vars
+  # full is list - plant diversity vars ####
   {
     # 1. perform the LMERs, tidied summary stats, and anova model fits
     results_rich_full <- rich_full %>% 
@@ -625,7 +625,7 @@ rich_full$Year <- as.factor(rich_full$Year)
       arrange(response_var, WetlandType)
     
     aics <- bind_rows(rich_aic_full, sl_rich_aic, sl_propexot_aic) # combine aic values and add to fits df
-    m_fits_full <- left_join(m_fits_full, aics)
+    m_fits_full_rich <- left_join(m_fits_full_rich, aics, by=c("WetlandType", "response_var"))
     
     # 4. gather all the R2 values for terrestrial and wetland models; add sl culimp r2 vals
     rich_margr <- results_rich_full %>% 
@@ -692,30 +692,13 @@ rich_full$Year <- as.factor(rich_full$Year)
     arrange(WetlandType) %>% 
     spread(., key=response_var, value=Marginal_R2)
   
-  #  how many sig results?
-  m_out_full %>% 
-    filter(term=="LowDistSp_N") %>% 
-    select(WetlandType, response_var, `Pr(>F)`) %>% 
-    filter(`Pr(>F)`<0.050) %>%
-    dim() # 21 /66 tests are sig
-  
-  # export
-  # write.csv(x=m_out_top5,
-  #           file="results/model output - Top5 Low IS.csv",
-  #           row.names = F)
-  # 
-  # write.csv(x=m_out_full,
-  #           file="results/model output - Full Low IS.csv",
-  #           row.names = F)
-  
   m_out_top5$IS_Type <- "Top 5 - Low"
   m_out_full$IS_Type <- "Full - Low"
   
   low_out <- bind_rows(m_out_top5, m_out_full) %>% select(IS_Type, everything())
   
   
-}  
-
+}
   
   # how many models show singularity issues
 m_summary_top5 %>% 
