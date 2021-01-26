@@ -1,0 +1,299 @@
+---
+title: 'Indicator Speices: Indicative of What? (Exploratory Analyses)'
+author: "Cari Ficken"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE, fig.align="center"}
+knitr::opts_chunk$set(echo = F, message=F, warning=F)
+library(tidyverse)
+library(lme4)
+library(lmerTest)
+```
+## Motivation
+
+This goal of this project is to evaluate which, if any, wetland ecosystem components vary with the richness/abundance of Indicator Species.
+
+Indicator Species were identified by Ficken et al 2019 (STOTEN). These species were significantly associated with distinct assemblages of vascular plant communities in OSR wetlands. Groups of wetlands (with similar plant communities) differed in the extent of total surrounding human development and in median C-score. The authors proposed using these species as indicators of human develompent. 
+
+__The question remains whether these species are proxies for other wetland environmental conditions (biotic or abiotic), and therefore whether they can be used to monitor/assess overall wetland health.__
+
+__Questions__
+1. Which biotic and abiotic wetland characteristics are associated with indicator-species based disturbance metrics?
+2. Does the rapid metric (i.e. top 5 species only) provide sufficient explanatory power relative to the intensive metric (i.e. using all IS)?
+
+## Approach
+
+To quantify the hypothesized 'condition' of a wetland, I used two metrics: 
+1. The indicator species ID'd in the STOTEN paper associated with highest extents of surrounding human development + those associated with lowest extents of surrounding human development). 
+2. A subset of #1: the __top 10 indicator species__ ID'd in the STOTEN paper (top 5 associated with highest extents of surrounding human development + top 5 associated with lowest extents of surrounding human development). 
+
+I rely primarily on richness (i.e. # out of 5 high or low dist species), b/c relatively few ABMI wetlands have data on veg abundance. Indicator species are specific to a wetland class/zone (bog, fen, marsh, shallow lake, wet meadow).
+
+I paired these metrics with other biotic and abiotic wetland characteristics (from ABMI data). I tested the relationships between the two disturbance metrics (based on indicator species; see #1 and #1 above) with: 
+
+* Biotic characteristics:
+  + Canopy openness
+  + Culturally important species (richness)
+  + Overall richness
+  + Nonnative species (proportion of total richness)
+  
+* Abiotic characteristics:
+  + Organic matter depth
+  + TC (soil)
+  + pH (soil)
+  + DO (water)
+  + DOC (water)
+  + EC (water)
+  + pH (water)
+  + Salinity (water)
+  + TN (water)
+  + TP (water)
+  
+Not all variables were measured on every wetland, so the sample size differs depending on the relationship.
+
+```{r load data}
+  
+  # data based on top 5 IS:
+  # site-level disturbance weights, plus the wetland and env characteristics
+  chars <- read.csv("data/clean/Site Dist Status - Wet and Env Chars - top 5 IS.csv")
+  chars <- chars %>% filter(WetlandType!="Swamp") %>% droplevels()
+  chars$uniqueID <- paste(chars$Protocol, chars$Site, sep="_")
+  
+  # site-level disturbance weights plus veg Presence-Absence
+  rich <- read.csv("data/clean/Site Dist Status - Veg PA - top 5 IS.csv") %>% 
+    filter(WetlandType!="Swamp")
+  # summarize and add variable for proportion of exotic sp
+  rich <- rich %>% 
+    mutate(ORIGIN=case_when(ORIGIN=="Unknown/Undetermined" ~ "Unknown",
+                            TRUE ~ as.character(ORIGIN))) %>% 
+    spread(., key=ORIGIN, value=PA) %>%  # first must expand native status for all levels and sites
+    replace_na(list(Exotic=0, Unknown=0, Native=0)) %>% 
+    gather(., key=Origin, value=PA,10:12) %>% 
+    group_by(Protocol, WetlandType, Site, Year, HighDistSp_N, LowDistSp_N, Origin) %>% 
+    summarize(Richness = sum(PA)) %>% # sum the num sp of each nativitiy status for each site 
+    group_by(Protocol, WetlandType, Site, Year, HighDistSp_N, LowDistSp_N) %>% 
+    mutate(TotRichness=sum(Richness),
+           PropExot = Richness/TotRichness) %>% # caluclate total rich (of all nativitiy status) and Prop Exotic
+    arrange(Protocol, WetlandType, Site, Year) %>% 
+    filter(Origin=="Exotic") %>% 
+    select(-Richness)
+  rich$uniqueID <- paste(rich$Protocol, rich$Site, sep="_")
+  
+  
+  # this file has site-level disturbance weights plus veg abundance
+  abund <- read.csv("data/clean/Site Dist Status - Veg Abund - top 5 IS.csv") %>% 
+    filter(WetlandType!="Swamp")
+  abund$uniqueID <- paste(abund$Protocol, abund$Site, sep="_")
+  
+  
+  ###########################################################################################
+  
+  # data based on full IS list
+  # site-level disturbance weights, plus the wetland and env characteristics
+  chars_full <-   chars_full <- read.csv("data/clean/Site Dist Status - Wet and Env Chars - all IS.csv") %>% 
+    filter(WetlandType!="Swamp") %>%
+    droplevels()
+  chars_full$uniqueID <- paste(chars_full$Protocol, chars_full$Site, sep="_")
+  
+  
+  # site-level disturbance weights plus veg Presence-Absence
+  rich_full <- read.csv("data/clean/Site Dist Status - Veg PA - all IS.csv") %>% 
+    filter(WetlandType!="Swamp")
+
+  # summarize and add variable for proportion of exotic sp
+  rich_full <- rich_full %>% 
+    mutate(ORIGIN=case_when(ORIGIN=="Unknown/Undetermined" ~ "Unknown",
+                            TRUE ~ as.character(ORIGIN))) %>% 
+    spread(., key=ORIGIN, value=PA) %>%  # first must expand native status for all levels and sites
+    replace_na(list(Exotic=0, Unknown=0, Native=0)) %>% 
+    gather(., key=Origin, value=PA,11:13) %>% 
+    group_by(Protocol, WetlandType, Site, Year, HighDistSp_N, LowDistSp_N, Origin) %>% 
+    summarize(Richness = sum(PA)) %>% # sum the num sp of each nativity status for each site 
+    group_by(Protocol, WetlandType, Site, Year, HighDistSp_N, LowDistSp_N) %>% 
+    mutate(TotRichness=sum(Richness),
+           PropExot = Richness/TotRichness) %>% # calculate total rich (of all nativity status) and Prop Exotic
+    arrange(Protocol, WetlandType, Site, Year) %>% 
+    filter(Origin=="Exotic") %>% 
+    select(-Richness)
+  rich_full$uniqueID <- paste(rich_full$Protocol, rich_full$Site, sep="_")
+
+  # this file has site-level disturbance weights plus veg abundance
+  abund_full <- read.csv("data/clean/Site Dist Status - Veg Abund - all IS.csv") %>% 
+    filter(WetlandType!="Swamp")
+  abund_full$uniqueID <- paste(abund_full$Protocol, abund_full$Site, sep="_")
+
+
+```
+
+We have a maximum of `r nrow(distinct(ungroup(rich_full), uniqueID))` wetlands sampled. This includes the following numbers of wetlands per wetland class:
+
+```{r num wetlands per class}
+  # num wetlands per wetland class
+  rich_full %>% 
+    distinct(WetlandType, uniqueID) %>% 
+    group_by(WetlandType) %>% 
+    tally()
+  
+```
+
+Some wetlands were sampled 2x (one marsh was sampled 3x). Counting these re-samples separately (we include Year as a random effect), we have a maximum of `r nrow(distinct(ungroup(rich_full), uniqueID, Year))` sampling events.
+
+## Results TL;DR
+
+Indicator Species are proxies for:
+
+* Bogs:
+  + Species richness
+  + Culturally Important Species
+  + Canopy openness
+  + Organic matter depth
+  + Soil pH
+  
+* Fens:
+  + Species richness
+  + Culturally Important Species
+  + Canopy openness
+  + Proportion of nonnative species
+  + Organic matter depth
+  + Soil pH
+
+  
+* Marshes:
+  + Proportion of nonnative species
+  + Water pH
+
+* Shallow Lakes:
+(none)
+
+* Wet Meadows:
+  + Proportion of nonnative species
+
+
+
+## Results
+
+Below I present very preliminary results. I show relationships with both the number of 'high disturbance species' (i.e. indicator species associated with wetlands surrounded by the highest levels of human footprint) and 'low disturbance species'.
+
+For the stats, I am doing mixed effect models. Each model includes the number of high disturbance or low disturbance species, plus protocol as fixed effects. (Protocol is the ABMI sampling protocol. It is mostly not a significant predictor, but I keep it anyway.) Each model also includes site ID and sampling Year as random effects. 
+
+Another interesting contribution would be to look at non-plant biota, but this will be difficult with ABMI data.
+
+### Culturally Important Species
+
+A number of culturally important species are actually high disturbance indicator species (IS). There are strong relationships between the the number of culturally important species and the num of high and low disturbance IS - especially in peatlands. Marginal R2 values (i.e. averaging over the random effects) exceed 0.80; conditional R2 values (i.e. including random effects) exceed 0.90.
+
+```{r cult imp sp - full IS}
+  chars_full %>% 
+    gather(., key=IS_type, value=Num, 5:6) %>% 
+    ggplot(., aes(x=Num, y=CulImp_N, color=Protocol)) +
+    geom_jitter(width=0.2, alpha=0.4) +
+    geom_smooth(method="lm", se=F) +
+    facet_grid(IS_type~WetlandType, scales="free") +
+    ggtitle("Full IS List") +
+    theme(legend.position = "top")
+```
+
+The rapid indicators (top 5 only) are also very strong predictors of the number of culturally important species.  
+
+```{r cult imp sp - top 5}
+  chars %>% 
+    gather(., key=IS_type, value=Num, 5:6) %>% 
+    ggplot(., aes(x=Num, y=CulImp_N, color=Protocol)) +
+    geom_jitter(width=0.2, alpha=0.4) +
+    geom_smooth(method="lm", se=F) +
+    facet_grid(IS_type~WetlandType, scales="free_y") +
+    ggtitle("Top 5 IS") +
+    theme(legend.position = "top")
+```
+
+
+### Canopy openness
+
+Canopy openness is inversely related to the num of high disturbance IS and positively related to the num of low disturbance species in peatlands.
+
+```{r canopy openness}
+  ggplot(filter(chars, WetlandType!="Shallow Lake"), aes(x=HighDistSp_N, y=CanopyOpenness)) +
+    geom_jitter(width=0.2, alpha=0.4) +
+    geom_smooth(method="lm", se=F) +
+    facet_wrap(~WetlandType, scales="free_y") +
+    theme(legend.position = "top") 
+ 
+```
+
+### Plant Richness
+
+Plant richness is strongly and positively related to the number of high dist IS in peatlands, and moderately and inversely related to low disturbance IS in bogs. In wet meadows, the number of low disturbance species is positively and moderately related to richness.
+
+```{r richness}
+  ggplot(rich, aes(x=HighDistSp_N, y=TotRichness, color=Protocol)) +
+    geom_jitter(width=0.2, alpha=0.4) +
+    geom_smooth(method="lm", se=F) +
+    facet_wrap(~WetlandType, scales="free_y") +
+    theme(legend.position = "top")
+
+```
+
+### Nonnnative species
+
+The propotion of nonnative species is positively related to the num of high disturbance IS in marshes and wet meadows (the latter only moderately), and inversely related to the num of low disturbance IS.
+
+```{r prop of nonnative species}
+
+  ggplot(rich, aes(x=HighDistSp_N, y=PropExot, color=Protocol)) +
+    geom_jitter(width=0.2, alpha=0.4) +
+    geom_smooth(method="lm", se=F) +
+    labs(y="Prop of Nonnative Sp") +
+    facet_wrap(~WetlandType, scales="free_y") +
+    theme(legend.position = "top")
+```
+
+### Soil OM depth
+
+Soil OM depth declines with increase high dist IS richness, and increases with low dist IS richness.
+
+```{r om}
+  ggplot(filter(chars, WetlandType!="Shallow Lake"), aes(x=HighDistSp_N, y=OMDepth_cm)) +
+    geom_jitter(width=0.2, alpha=0.4) +
+    geom_smooth(method="lm", formula=y~poly(x,2), se=F) +
+    facet_wrap(~WetlandType, scales="free_y") +
+    theme(legend.position = "top")
+
+```
+
+### Total soil carbon
+
+In general, total soil carbon is not assodciated with richness of either high or low disturbance IS.
+
+### Soil pH
+
+Soil pH is positively associated with richness of high dist IS in bogs and fens, and negatively associated with richness of low dist IS in bogs.
+
+```{r soil pH}
+  ggplot(filter(chars, WetlandType!="Shallow Lake"), aes(x=HighDistSp_N, y=pH_soil)) + 
+    geom_jitter(width=0.2, alpha=0.4) +
+    geom_smooth(method="lm", se=F) +
+    facet_wrap(~WetlandType, scales="free_y") +
+    theme(legend.position = "top")
+
+```
+
+### Water physicochemistry (DO, DOC, EC, pH, salinity, TN, TP)
+
+IS are significantly but weakly (R2 values around 0.01 - 0.05) related to DO, DOC, EC, salinity, TN (total nitrogen), and TP (total phosphorus).
+
+Richness of Low dist IS are moderately and inversely related to water pH in Bogs and Marshes (R2 values around 0.15).
+
+```{r water pH}
+  ggplot(chars, aes(x=LowDistSp_N, y=pH_water)) + 
+    geom_jitter(width=0.2, alpha=0.4) +
+    geom_smooth(method="lm", se=F) + 
+    facet_wrap(~WetlandType, scales="free_y") +
+    theme(legend.position = "top")
+
+```
+
