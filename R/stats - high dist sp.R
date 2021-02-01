@@ -1,9 +1,7 @@
-# this file conducts statistical analyses
-# IS (top 5 sp) chosen based on community composition
-# IS purported to be associated with HF, but what other wetland/env attributes are they associated with
+# this file run regressions to predict wetland characteristics with HIGH dist indicator species
+# see "stats - low dist sp.R" for code to run analyses for low dist indicator species 
 
-# High dist sp are sp associated with most dist
-# low dist species are sp assocaited with least dist
+# High dist sp are sp associated with most dist; low dist species are sp associated with least dist
 
 library(tidyverse)
 library(lme4)
@@ -37,10 +35,13 @@ library(broom.mixed)
   
 }
 
-chars$Year <- as.factor(chars$Year)
-rich$Year <- as.factor(rich$Year)
-chars_full$Year <- as.factor(chars_full$Year)
-rich_full$Year <- as.factor(rich_full$Year)
+# convert Year variable to factor
+{
+  chars$Year <- as.factor(chars$Year)
+  rich$Year <- as.factor(rich$Year)
+  chars_full$Year <- as.factor(chars_full$Year)
+  rich_full$Year <- as.factor(rich_full$Year)
+}
 
 # standardize wetland characteristic response variables to compare IS effect sizes across characteristics
 {
@@ -107,7 +108,7 @@ rich_full$Year <- as.factor(rich_full$Year)
   
 }
 
-# Top 5 IS ####
+# Analyses with: Top 5 IS ####
 {
   # regressions:
   # Num of HighDistSp as fixed eff
@@ -410,7 +411,7 @@ rich_full$Year <- as.factor(rich_full$Year)
   
 }
 
-# Full IS list #### 
+# Analyses with: Full IS list #### 
 {
   # regressions:
   # Num of HighDistSp as fixed eff
@@ -713,7 +714,7 @@ rich_full$Year <- as.factor(rich_full$Year)
   
 }
 
-# combine and export model results
+# combine and export results for all models
 {
   # join richness and chars output dfs togehter
   
