@@ -55,6 +55,41 @@ library(broom.mixed)
   
 }
 
+#  check normality - ok 
+{
+  # from The R Book p 636
+  checkdat <- filter(chars, WetlandType=="Bog")
+  checkmod <- lmer(CulImp_N ~ LowDistSp_N + (1|Protocol) + (1|Year), data=checkdat)
+  # response shows relatively linear relationship to fitted values
+  plot(checkmod, CulImp_N ~ fitted(.))
+  # variances are homogeneous across groups
+  plot(checkmod) # even spread around 0 line
+  # residuals are normally distributed
+  lattice::qqmath(checkmod) # most lie on line
+  # residuals normally distributed across groups too
+  checkmod1 <- nlme::lme(CulImp_N ~ LowDistSp_N,
+                         random = ~1|Year/Protocol, data=checkdat)
+  qqnorm(checkmod1, ~resid(.)|Protocol) # straight line
+  qqnorm(checkmod1, ~resid(.)|Year) # straight line
+  
+  # using total richness
+  checkdatr <- filter(rich, WetlandType=="Bog")
+  checkmodr <- lmer(TotRichness ~ LowDistSp_N + (1|Protocol) + (1|Year), data=checkdatr)
+  # response shows relatively linear relationship to fitted values
+  plot(checkmodr, TotRichness ~ fitted(.))
+  # variances are homogeneous across groups
+  plot(checkmodr) # even spread around 0 line
+  # residuals are normally distributed
+  lattice::qqmath(checkmodr) # most lie on line
+  # residuals normally distributed across groups too
+  checkmod1r <- nlme::lme(TotRichness ~ LowDistSp_N,
+                          random = ~1|Year/Protocol, data=checkdatr)
+  qqnorm(checkmod1r, ~resid(.)|Protocol)
+  qqnorm(checkmod1r, ~resid(.)|Year)
+  
+  
+}
+
 # Analyses with: Top 5 IS ####
 {
   # regressions:
