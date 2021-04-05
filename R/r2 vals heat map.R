@@ -108,7 +108,7 @@ rm(list=ls())
       filter(IS_Type=="Top 5 - Low") %>% 
       ggplot(., aes(x=response_var, y=WetlandType, fill=Marginal_R2)) +
       geom_tile() +
-      scale_fill_gradient2(low="white", high="blue", limits=c(0,0.8)) +
+      scale_fill_gradient2(low="white", high="#56B4E9", limits=c(0,0.8)) +
       geom_text(data = filter(est, IS_Type== "Top 5 - Low"),
                 aes(x=response_var, y= WetlandType, 
                     label=round(estimate, 2)),
@@ -126,7 +126,7 @@ rm(list=ls())
       filter(IS_Type=="Full - Low") %>% 
       ggplot(., aes(x=response_var, y=WetlandType, fill=Marginal_R2)) +
       geom_tile() +
-      scale_fill_gradient2(low="white", high="blue", limits=c(0,0.8)) +
+      scale_fill_gradient2(low="white", high="#56B4E9", limits=c(0,0.8)) +
       geom_text(data = filter(est, IS_Type== "Full - Low"),
                 aes(x=response_var, y= WetlandType, 
                     label=round(estimate, 2)),
@@ -143,7 +143,7 @@ rm(list=ls())
       filter(IS_Type=="Top 5 - High") %>% 
       ggplot(., aes(x=response_var, y=WetlandType, fill=Marginal_R2)) +
       geom_tile() +
-      scale_fill_gradient2(low="white", high="red", limits=c(0,0.8)) +
+      scale_fill_gradient2(low="white", high="#009E73", limits=c(0,0.8)) +
       geom_vline(xintercept = c(4.5, 7.5)) +
       geom_text(data = filter(est, IS_Type== "Top 5 - High"),
                 aes(x=response_var, y= WetlandType, 
@@ -160,7 +160,7 @@ rm(list=ls())
       filter(IS_Type=="Full - High") %>% 
       ggplot(., aes(x=response_var, y=WetlandType, fill=Marginal_R2)) +
       geom_tile() +
-      scale_fill_gradient2(low="white", high="red", limits=c(0,0.8)) +
+      scale_fill_gradient2(low="white", high="#009E73", limits=c(0,0.8)) +
       geom_vline(xintercept = c(4.5, 7.5)) +
       geom_text(data = filter(est, IS_Type== "Full - High"),
                 aes(x=response_var, y= WetlandType, 
@@ -192,8 +192,9 @@ rm(list=ls())
               myheatmap_full, 
               ncol=1, nrow=2, rel_heights = c(0.15,1))
     full_is_heatmap
+    
     ggsave(full_is_heatmap,
-           file="./manuscript/figures/fig1.jpg",
+           file="./results/fig1 - full is list heatmap.jpg",
            width=18, height=10, units="cm",dpi=300)
   }
   
