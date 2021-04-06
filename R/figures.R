@@ -131,6 +131,24 @@ library(gridExtra)
   
 }
 
+# check results for out liers
+{
+  head(rich)
+  ggplot(rich, aes(x=LowDistSp_N, y=PropExot)) +
+    geom_jitter(color=1, pch=1, width=0.3) +
+    geom_smooth(method="lm") +
+    facet_wrap(~WetlandType, scale="free_y")
+  
+  chars %>% 
+    filter(WetlandType=="Wet Meadow") %>% 
+    gather(., key="Wet_response", value = Val, 9:ncol(.) ) %>% 
+    ggplot(., aes(x=LowDistSp_N, y=Val)) +
+    # geom_point(color=1, pch=1) +
+    geom_jitter(color=1, pch=1, width=0.3) +
+    geom_smooth(method="lm") +
+    facet_wrap(~Wet_response, scale="free_y")
+}
+
 # fig 1 - heat map -- see `r2 vals heat map.R` ####
 
 # fig 2 - model comparison eg bogs
@@ -278,174 +296,264 @@ library(gridExtra)
     bog_ex_fig <- plot_grid(bothlegs, tmp_p, ncol=1, rel_heights = c(0.1,1))
     bog_ex_fig
     ggsave(bog_ex_fig,
-           file="./results/full vs rapid model comps - bogs.jpg",
+           file="./results/fig 2 - full vs rapid model comps - bogs.jpg",
            height=14, width=12, units = "cm", dpi=300)
     
   }
   
 }
 
-# rich, cul imp rich, and OM depth regressions
+# figure 3 - important results in bogs and fens ####
 {
-  # culturally important sp
+  # scale_color_manual(values=c("#7570b3", "#d95f02")) +
+  # bogs
   {
-    culimp_bog <- ggplot(filter(chars, WetlandType=="Bog"), 
-                         aes(x=HighDistSp_N, y=CulImp_N, shape=WetlandType, linetype=WetlandType), color=1) +
-      geom_smooth(method="lm", se=F, color=1) +
-      geom_smooth(method="lm", show.legend = F, color=1) +
-      geom_jitter(width=0.1, color="black", alpha=0.5) +
-      lims(x=c(-0.1,5.1), y=c(0,30)) +
-      scale_shape_manual(values=c(16, 17)) +  
-      labs(x=expression(paste(HDI[rapid], " Richness (Num.)")),
-           y="Cul. Important Sp. (Num.)") +
-      theme_bw() +
+    rich_bogs <-
+      ggplot(filter(rich, WetlandType=="Bog"), 
+             aes(x=HighDistSp_N, y=TotRichness, shape=WetlandType, linetype=WetlandType, color=WetlandType)) +
+      # geom_smooth(method="lm", show.legend = F, color=1) +
+      geom_jitter(width=0.3, alpha=0.5) +
+      geom_smooth(method="lm", se=F) +
+      lims( y=c(0,120)) +
+      scale_x_continuous(breaks=0:5, limits = c(-0.3,5.3)) +
+      scale_shape_manual(values=c(1,2)) +
+      scale_color_manual(values=c("#7570b3", "#d95f02")) +
+      labs(x=expression(paste(HDI[rapid], " in Bogs (Num.)")),
+           y="Total Rich.\n(Num.)") +
+      theme_classic() +
       # facet_wrap(~WetlandType, scale="free") +
       theme(legend.position="none",
-            panel.grid.minor = element_blank(),
-            axis.text=element_text(color=1))
-    
-    culimp_fen <- ggplot(filter(chars, WetlandType=="Fen"), 
-                         aes(x=HighDistSp_N, y=CulImp_N, shape=WetlandType, linetype=WetlandType), color=1) +
-      geom_smooth(method="lm", se=F, color=1) +
-      geom_smooth(method="lm", show.legend = F, color=1) +
-      geom_jitter(width=0.1, color="black", alpha=0.5) +
-      lims(x=c(-0.1,5.1), y=c(0,30)) +
-      scale_shape_manual(values=c(16, 17)) +  
-      labs(x=expression(paste(HDI[rapid], " Richness (Num.)")),
-           y="Cul. Important Sp. (Num.)") +
-      theme_bw() +
-      # facet_wrap(~WetlandType, scale="free") +
-      theme(legend.position="none",
-            panel.grid.minor = element_blank(),
-            axis.text=element_text(color=1))
-  }
-
-  # total richness
-  {
-    rich_bog <- ggplot(filter(rich, WetlandType=="Bog"), 
-                               aes(x=HighDistSp_N, y=TotRichness, shape=WetlandType, linetype=WetlandType), color=1) +
-      geom_smooth(method="lm", se=F, color=1) +
-      geom_smooth(method="lm", show.legend = F, color=1) +
-      geom_jitter(width=0.1, color="black", alpha=0.5) +
-      lims(x=c(-0.1,5.1), y=c(0,120)) +
-      scale_shape_manual(values=c(16, 17)) +
-      labs(x=expression(paste(HDI[rapid], " Richness (Num.)")),
-           y="Total Richness (Num.)") +
-      theme_bw() +
-      # facet_wrap(~WetlandType, scale="free") +
-      theme(legend.position="none",
-            panel.grid.minor = element_blank(),
+            legend.title=element_blank(),
+            panel.grid = element_blank(),
             axis.text = element_text(color=1))
     
-    rich_fen <- ggplot(filter(rich, WetlandType=="Fen"), 
-                       aes(x=HighDistSp_N, y=TotRichness, shape=WetlandType, linetype=WetlandType), color=1) +
-      geom_smooth(method="lm", se=F, color=1) +
-      geom_smooth(method="lm", show.legend = F, color=1) +
-      geom_jitter(width=0.1, color="black", alpha=0.5) +
-      lims(x=c(-0.1,5.1), y=c(0,120)) +
-      scale_shape_manual(values=c(16, 17)) +
-      labs(x=expression(paste(HDI[rapid], " Richness (Num.)")),
-           y="Total Richness (Num.)") +
-      theme_bw() +
+    
+    culimp_bogs <- ggplot(filter(chars, WetlandType=="Bog"), 
+                          aes(x=HighDistSp_N, y=CulImp_N, shape=WetlandType, linetype=WetlandType, color=WetlandType)) +
+      geom_smooth(method="lm", se=F) +
+      # geom_smooth(method="lm", show.legend = F, color=1) +
+      geom_jitter(width=0.3, alpha=0.5) +
+      lims( y=c(0,30)) +
+      scale_x_continuous(breaks=0:5, limits = c(-0.3,5.3)) +scale_shape_manual(values=c(1, 17)) +  
+      scale_color_manual(values=c("#7570b3")) +
+      labs(x=expression(paste(HDI[rapid], " in Bogs (Num.)")),
+           y="Cul. Imp. Sp.\n(Num.)") +
+      theme_classic() +
       # facet_wrap(~WetlandType, scale="free") +
       theme(legend.position="none",
-            panel.grid.minor = element_blank(),
-            axis.text = element_text(color=1))
+            legend.title=element_blank(),
+            panel.grid = element_blank(),
+            axis.text=element_text(color=1))
+    
+    om_bogs <- ggplot(filter(chars, WetlandType=="Bog"), 
+                      aes(x=HighDistSp_N, y=OMDepth_cm, shape=WetlandType, linetype=WetlandType, color=WetlandType)) +
+      # geom_smooth(method="lm", show.legend = F, color=1) +
+      geom_jitter(width=0.3, alpha=0.5) +
+      geom_smooth(method="lm", se=F) +
+      scale_x_continuous(breaks=0:5, limits = c(-0.3,5.3)) +
+      scale_shape_manual(values=c(1,2)) +
+      scale_color_manual(values=c("#7570b3")) +
+      labs(x=expression(paste(HDI[rapid], " in Bogs (Num.)")),
+           y="OM Depth\n(cm)") +
+      theme_classic() +
+      # facet_wrap(~WetlandType, scale="free") +
+      theme(legend.position="none",
+            legend.title=element_blank(),
+            panel.grid = element_blank(),
+            axis.text=element_text(color=1))
+    
+    bogfits <- plot_grid(rich_bogs + theme(axis.title.x=element_blank(),
+                                           axis.text.x = element_blank()),
+                         culimp_bogs + theme(axis.title.x=element_blank(),
+                                             axis.text.x = element_blank()),
+                         om_bogs , 
+                         ncol=1, nrow=3,
+                         labels=c("a", "c", "e"), align="v",
+                         rel_heights = c(0.9,0.9,1)) 
   }
   
-  # organic matter
+  # fens
   {
-    om_bog <- ggplot(filter(chars, WetlandType=="Bog"), 
-                          aes(x=HighDistSp_N, y=OMDepth_cm, shape=WetlandType, linetype=WetlandType), color=1) +
-      geom_smooth(method="lm", se=F, color=1) +
-      geom_smooth(method="lm", show.legend = F, color=1) +
-      geom_jitter(width=0.1, color="black", alpha=0.5) +
-      lims(x=c(-0.1,5.1), y=c(-15,400)) +
-      scale_shape_manual(values=c(16, 17)) +  
-      labs(x=expression(paste(HDI[rapid], " Richness (Num.)")),
-           y="OM (cm)") +
-      theme_bw() +
+    rich_fens <-
+      ggplot(filter(rich, WetlandType=="Fen"), 
+             aes(x=HighDistSp_N, y=TotRichness, shape=WetlandType, linetype=WetlandType, color=WetlandType)) +
+      # geom_smooth(method="lm", show.legend = F, color=1) +
+      geom_jitter(width=0.3, alpha=0.5) +
+      geom_smooth(method="lm", se=F) +
+      lims( y=c(0,120)) +
+      scale_x_continuous(breaks=0:5, limits = c(-0.3,5.3)) +
+      scale_shape_manual(values=c(1,2)) +
+      scale_color_manual(values=c("#d95f02")) +
+      labs(x=expression(paste(HDI[rapid], " in Fens (Num.)")),
+           y="Total Rich.\n(Num.)") +
+      theme_classic() +
       # facet_wrap(~WetlandType, scale="free") +
       theme(legend.position="none",
-            panel.grid.minor = element_blank(),
-            axis.text=element_text(color=1))
+            legend.title=element_blank(),
+            panel.grid = element_blank(),
+            axis.text = element_text(color=1))
     
-    om_fen <- ggplot(filter(chars, WetlandType=="Fen"), 
-                     aes(x=HighDistSp_N, y=OMDepth_cm, shape=WetlandType, linetype=WetlandType), color=1) +
-      geom_smooth(method="lm", se=F, color=1) +
-      geom_smooth(method="lm", show.legend = F, color=1) +
-      geom_jitter(width=0.1, color="black", alpha=0.5) +
-      lims(x=c(-0.1,5.1), y=c(-15,400)) +
-      scale_shape_manual(values=c(16, 17)) +  
-      labs(x=expression(paste(HDI[rapid], " Richness (Num.)")),
-           y="OM (cm)") +
-      theme_bw() +
+    
+    culimp_fens <- ggplot(filter(chars, WetlandType=="Fen"), 
+                          aes(x=HighDistSp_N, y=CulImp_N, shape=WetlandType, linetype=WetlandType, color=WetlandType)) +
+      geom_smooth(method="lm", se=F) +
+      # geom_smooth(method="lm", show.legend = F, color=1) +
+      geom_jitter(width=0.3, alpha=0.5) +
+      lims( y=c(0,30)) +
+      scale_x_continuous(breaks=0:5, limits = c(-0.3,5.3)) +scale_shape_manual(values=c(1, 17)) +  
+      scale_color_manual(values=c("#d95f02")) +
+      labs(x=expression(paste(HDI[rapid], " in Fens (Num.)")),
+           y="Cul. Imp. Sp.\n(Num.)") +
+      theme_classic() +
       # facet_wrap(~WetlandType, scale="free") +
       theme(legend.position="none",
-            panel.grid.minor = element_blank(),
+            legend.title=element_blank(),
+            panel.grid = element_blank(),
             axis.text=element_text(color=1))
     
-  }
+    om_fens <- ggplot(filter(chars, WetlandType=="Fen"), 
+                      aes(x=HighDistSp_N, y=OMDepth_cm, shape=WetlandType, linetype=WetlandType, color=WetlandType)) +
+      # geom_smooth(method="lm", show.legend = F, color=1) +
+      geom_jitter(width=0.3, alpha=0.5) +
+      geom_smooth(method="lm", se=F) +
+      scale_x_continuous(breaks=0:5, limits = c(-0.3,5.3)) +
+      scale_shape_manual(values=c(1,2)) +
+      scale_color_manual(values=c("#d95f02")) +
+      labs(x=expression(paste(HDI[rapid], " in Fens (Num.)")),
+           y="OM Depth\n(cm)") +
+      theme_classic() +
+      # facet_wrap(~WetlandType, scale="free") +
+      theme(legend.position="none",
+            legend.title=element_blank(),
+            panel.grid = element_blank(),
+            axis.text=element_text(color=1))
+    
+    fenfits <- plot_grid(rich_fens + theme(axis.title.x=element_blank(),
+                                           axis.text.x = element_blank()),
+                         culimp_fens + theme(axis.title.x=element_blank(),
+                                             axis.text.x = element_blank()),
+                         om_fens , 
+                         ncol=1, nrow=3,
+                         labels=c("b", "d", "f"), align="v",
+                         rel_heights = c(0.9,0.9,1)) 
+    
 
+  }
   
-  plot_grid(rich_bog + theme(axis.title.x = element_blank(),
-                             axis.text.x = element_blank()), 
-            rich_fen + theme(axis.title = element_blank(),
-                             axis.text = element_blank()),
-            culimp_bog + theme(axis.title.x = element_blank(),
-                               axis.text.x = element_blank()),
-            culimp_fen + theme(axis.title = element_blank(),
-                               axis.text = element_blank()),
-            om_bog, 
-            om_fen + theme(axis.title.y = element_blank(),
-                           axis.text.y=element_blank()),
-            ncol=2, nrow=3,
-            labels="auto")
-  
-  
-  # ggsave(fig2,
-  #        file="./manuscript/figures/fig2.jpg",
-  #        dpi=300, width=10, height=10, units="cm")
+  peatland_fits <- plot_grid(bogfits, fenfits, ncol=2, align="h")
+  ggsave(peatland_fits,
+         file="./results/fig3 - peatfit.jpg",
+         dpi=300, width=12, height=12, units="cm")
   
 }
 
-# fig 3 - peatland regressions ####
+# bogs
 {
-
-
-
-fig3 <- plot_grid(peatland_culimp + 
-            theme(axis.title.x = element_blank(),
-                  axis.text.x = element_blank(),
-                  axis.text.y = element_text(angle=90, hjust = .5)), 
-          peatland_totrich +
-            theme(axis.title.x = element_blank(),
-                  axis.text.x = element_blank(),
-                  axis.text.y = element_text(angle=90, hjust = .5)),
-          peatland_om +
-            theme(axis.text.y = element_text(angle=90, hjust = .5)),
-          ncol=1, nrow=3,
-          align = "v",
-          rel_heights = c(0.9,0.9, 1))
-fig3
-
-ggsave(fig3,
-       file="./manuscript/figures/fig3.jpg",
-       dpi=300, width=10, height=12, units="cm")
-
+  rich_wms <-
+    ggplot(filter(rich, WetlandType=="Wet Meadow"), 
+           aes(x=LowDistSp_N, y=TotRichness, shape=WetlandType, linetype=WetlandType, color=WetlandType)) +
+    # geom_smooth(method="lm", show.legend = F, color=1) +
+    geom_jitter(width=0.3, alpha=0.5) +
+    geom_smooth(method="lm", se=F) +
+    lims( y=c(0,120)) +
+    scale_x_continuous(breaks=0:5, limits = c(-0.3,5.3)) +
+    scale_shape_manual(values=c(1,2)) +
+    scale_color_manual(values=c("#1b9e77")) +
+    labs(x=expression(paste(LDI[rapid], " in WMs (Num.)")),
+         y="Total Rich.\n(Num.)") +
+    theme_classic() +
+    # facet_wrap(~WetlandType, scale="free") +
+    theme(legend.position="none",
+          legend.title=element_blank(),
+          panel.grid = element_blank(),
+          axis.text = element_text(color=1))
+  
+  
+  culimp_wms <- ggplot(filter(chars, WetlandType=="Wet Meadow"), 
+                        aes(x=LowDistSp_N, y=CulImp_N, shape=WetlandType, linetype=WetlandType, color=WetlandType)) +
+    geom_smooth(method="lm", se=F) +
+    # geom_smooth(method="lm", show.legend = F, color=1) +
+    geom_jitter(width=0.3, alpha=0.5) +
+    lims( y=c(0,30)) +
+    scale_x_continuous(breaks=0:5, limits = c(-0.3,5.3)) +scale_shape_manual(values=c(1, 17)) +  
+    scale_color_manual(values=c("#1b9e77")) +
+    labs(x=expression(paste(LDI[rapid], " in WMs (Num.)")),
+         y="Cul. Imp. Sp.\n(Num.)") +
+    theme_classic() +
+    # facet_wrap(~WetlandType, scale="free") +
+    theme(legend.position="none",
+          legend.title=element_blank(),
+          panel.grid = element_blank(),
+          axis.text=element_text(color=1))
+  
+  exot_wms <- ggplot(filter(rich, WetlandType=="Wet Meadow"), 
+                    aes(x=LowDistSp_N, y=PropExot, shape=WetlandType, linetype=WetlandType, color=WetlandType)) +
+    # geom_smooth(method="lm", show.legend = F, color=1) +
+    geom_jitter(width=0.3, alpha=0.5) +
+    geom_smooth(method="lm", se=F) +
+    scale_x_continuous(breaks=0:5, limits = c(-0.3,5.3)) +
+    scale_shape_manual(values=c(1,2)) +
+    scale_color_manual(values=c("#1b9e77")) +
+    labs(x=expression(paste(LDI[rapid], " in WMs (Num.)")),
+         y="Exotic Sp.\n(Proportion)") +
+    theme_classic() +
+    # facet_wrap(~WetlandType, scale="free") +
+    theme(legend.position="none",
+          legend.title=element_blank(),
+          panel.grid = element_blank(),
+          axis.text=element_text(color=1))
+  
+  
+  canopen_wms <- ggplot(filter(chars, WetlandType=="Wet Meadow"), 
+         aes(x=LowDistSp_N, y=CanopyOpenness, shape=WetlandType, linetype=WetlandType, color=WetlandType)) +
+    # geom_smooth(method="lm", show.legend = F, color=1) +
+    geom_jitter(width=0.3, alpha=0.5) +
+    geom_smooth(method="lm", se=F) +
+    scale_x_continuous(breaks=0:5, limits = c(-0.3,5.3)) +
+    scale_shape_manual(values=c(1,2)) +
+    scale_color_manual(values=c("#1b9e77")) +
+    labs(x=expression(paste(LDI[rapid], " in WMs (Num.)")),
+         y="Can. Open.\nIndex (N/96)") +
+    theme_classic() +
+    # facet_wrap(~WetlandType, scale="free") +
+    theme(legend.position="none",
+          legend.title=element_blank(),
+          panel.grid = element_blank(),
+          axis.text=element_text(color=1))
+  
+  wmfits <- plot_grid(rich_wms + theme(axis.title.x=element_blank(),
+                                         axis.text.x = element_blank()),
+                       culimp_wms + theme(axis.title.x=element_blank(),
+                                           axis.text.x = element_blank()),
+                      exot_wms ,
+                      canopen_wms,
+ 
+                       ncol=2, nrow=2,
+                       labels="auto", align="v",
+                       rel_heights = c(0.9,1)) 
+  
+  wmfits
+  ggsave(wmfits,
+         file="./results/fig4 - wm fits.jpg",
+         dpi=300, width=12, height=9, units="cm")
 }
 
-# fig 4 - marsh, sl, wm regressions ####
+# fig 4 - important results in marsh, sl, wm ####
 {
-  min_culimp <- ggplot(filter(chars, WetlandType!="Bog" & WetlandType!="Fen"), 
-         aes(x=LowDistSp_N, y=CulImp_N, shape=WetlandType, linetype=WetlandType), color=1) +
+  chars %>% 
+    # filter(!is.na(TC_soil)) %>% 
+    filter(WetlandType=="Marsh") %>% 
+    select(LowDistSp_N, TC_soil) %>% View()
+  
+  ggplot(filter(chars, WetlandType=="Marsh"), 
+         aes(x=LowDistSp_N, y=TC_soil , shape=WetlandType, linetype=WetlandType), color=1) +
     geom_smooth(method="lm", se=F, color=1) +
     geom_smooth(method="lm", show.legend = F, color=1) +
     geom_jitter(width=0.1, color="black", alpha=0.5) +
-    lims(x=c(0,5)) +
+    # lims(x=c(0,5)) +
     scale_shape_manual(values=c(15:17)) +  
-    labs(x=expression(paste(LDI[rapid], " Richness (Num.)")),
-         y="Cul. Important Sp. (Num.)") +
+    labs(x=expression(paste(LDI[rapid], " in Marshes (Num.)")),
+         y="Soil Carbon (% dry weight") +
     theme_bw() + 
     facet_wrap(~WetlandType, scale="free") +
     theme(legend.position="none",panel.grid = element_blank())
